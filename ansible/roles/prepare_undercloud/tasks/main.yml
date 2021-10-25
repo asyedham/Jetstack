@@ -1,0 +1,70 @@
+---
+#Prepares the undercloud
+
+- name: Create a stack user
+  user:
+    name: "{{ user }}"
+    password: "{{ ansible_ssh_pass }}"
+    create_home: yes
+    home: "/home/{{ user }}"
+
+- name: Add to sudoers
+  lineinfile:
+    dest: "/etc/sudoers"
+    line: "{{ user }} ALL=(root) NOPASSWD:ALL"
+
+- name: lock the undercloud to RHEL release
+  shell: |
+    subscription-manager release --set={{ rhel_release }}
+  become: true
+
+- name: Disable the default repos
+  shell: |
+    subscription-manager repos --disable=*
+  become: true
+  become_user: stack
+
+- name: Enable the RHEL repos
+  shell: |
+    "{{ enable_repos_uc }}"
+  become: true
+  become_user: stack
+
+- name: set the container tools repo module to version
+  shell: |
+    dnf module disable -y container-tools:rhel8
+    dnf module enable -y container-tools:2.0
+  become: true
+  become_user: stack
+
+- name: set virt repo module to version
+  shell: |
+    dnf module disable -y virt:rhel
+    dnf module enable -y virt:8.2
+  become: true
+  become_user: stack
+
+- name: Install required packages
+  dnf:
+    name: python3-tripleoclient
+  become: true
+
+- name: generate a container image prepare file
+  shell: |
+    openstack tripleo container image prepare default \
+  --local-push-destination \
+  --output-env-file containers-prepare-parameter.yaml
+
+- name: append the containerimage registry credentials
+  blockinfile:
+    dest: /home/stack/containers-prepare-parameter.yaml
+    block: |
+      ContainerImageRegistryLogin: false
+      ContainerImageRegistryCredentials:
+        registry.redhat.io:
+          "{{ reg_user }}": "{{ reg_password }}"
+
+- name: Setup undercloud.conf
+  template:
+    src: undercloud.conf.j2
+    dest: "{{ undercloud_conf }}"
