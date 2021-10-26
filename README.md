@@ -1,5 +1,7 @@
 # Jetstack
 
+Jetstack is used for deploying OSP using director on IBM cloud
+
 Pre-requisites:
 ===============
 
