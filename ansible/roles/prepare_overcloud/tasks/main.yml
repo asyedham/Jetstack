@@ -1,0 +1,58 @@
+---
+# tasks file for prepare_overcloud
+- name: check if the the instackenv.json exists
+  stat:
+    path: "{{ instackenv_file }}"
+  register: instack
+
+- name: Missing instackenv.json
+  fail:
+    msg: instackenv.json is missing
+  when: instack.stat.exists == False
+
+- name: Obtaining images for overcloud nodes
+  dnf:
+    name: "{{ item }}"
+  with_item:
+    - rhosp-director-images
+    - rhosp-director-images-ipa
+
+- name: Extract the image archives to images
+  shell: |
+    for i in /usr/share/rhosp-director-images/overcloud-full-latest-16.1.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-16.1.tar; do tar -xvf $i; done
+
+- name: import images into director
+  shell: |
+    source stackrc
+    openstack overcloud image upload --image-path /home/stack/
+
+- name: validate the instackenv.json
+  shell: |
+    source ~/stackrc
+    openstack overcloud node import --validate-only ~/instackenv.json
+
+- name: import the overcloud nodes
+  shell: |
+    source ~/stackrc
+    openstack overcloud node import ~/instackenv.json
+
+- name: introspect the overcloud nodes
+  shell: |
+    source ~/stackrc
+    openstack overcloud node introspect --all-manageable --provide
+
+- name : set properties for baremetal flavor
+  shell: |
+    source ~/stackrc
+    openstack flavor set --property "capabilities:boot_option"="local" --property "capabilities:profile"="baremetal" baremetal
+
+- name: get the oc node ids
+  shell: |
+    openstack baremetal node list --format value -c UUID
+  register: node_ids
+
+- name: tag the overcloud nodes
+  shell: |
+    source ~/stackrc
+    openstack baremetal node set "{{ item }}" --property capabilities=profile:baremetal,cpu_vt:true,cpu_hugepages:true,boot_option:local,cpu_txt:true,cpu_aes:true,cpu_hugepages_1g:true,boot_mode:bios
+  with_items: "{{ node_ids.results }}"
