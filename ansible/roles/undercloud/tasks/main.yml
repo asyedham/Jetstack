@@ -1,0 +1,7 @@
+---
+# tasks file for undercloud
+#
+
+- name: Install undercloud
+  shell: |
+    openstack undercloud install
