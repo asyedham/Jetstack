@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  roles:
+    - role: prepare_undercloud
+    - role: undercloud
+

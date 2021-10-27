@@ -3,7 +3,6 @@
 user: stack
 password: stack
 rhel_release: 8.2
-enable_repos_uc:
 reg_user:
 reg_password:
 undercloud_conf: /home/stack/undercloud.conf

@@ -1,10 +1,13 @@
 ---
 #Prepares the undercloud
+- name: unregister the default rhsm
+  redhat_subscription:
+    state: absent
 
 - name: Create a stack user
   user:
     name: "{{ user }}"
-    password: "{{ ansible_ssh_pass }}"
+    password: "{{ stack_ssh_pass }}"
     create_home: yes
     home: "/home/{{ user }}"
 
@@ -13,58 +16,68 @@
     dest: "/etc/sudoers"
     line: "{{ user }} ALL=(root) NOPASSWD:ALL"
 
-- name: lock the undercloud to RHEL release
+- name: get rhos-release rpms
   shell: |
-    subscription-manager release --set={{ rhel_release }}
-  become: true
+    wget http://127.0.0.1:8997/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
+  notify:
+    - install rhos-release
 
-- name: Disable the default repos
+- name: add download.devel to /etc/hosts
   shell: |
-    subscription-manager repos --disable=*
-  become: true
-  become_user: stack
+    echo "127.0.0.1 download.devel.redhat.com" >> /etc/hosts
+  notify:
+    - install rhos-release
+    - modify yum repos
 
-- name: Enable the RHEL repos
+- name: install rhos-release for specific osp version
   shell: |
-    "{{ enable_repos_uc }}"
-  become: true
-  become_user: stack
+    rhos-release "{{ osp_version }}" -p passed_phase2 -r "{{ rhel_version }}";
+  ignore_errors: yes
+  notify:
+    - modify yum repos
 
-- name: set the container tools repo module to version
+- name: enable the required virt and container-tools module
   shell: |
-    dnf module disable -y container-tools:rhel8
-    dnf module enable -y container-tools:2.0
-  become: true
-  become_user: stack
-
-- name: set virt repo module to version
-  shell: |
-    dnf module disable -y virt:rhel
-    dnf module enable -y virt:8.2
-  become: true
-  become_user: stack
+    dnf -y module disable virt:rhel container-tools:rhel8;
+    dnf -y module enable virt:8.2 container-tools:2.0;
+    dnf update -y;
 
 - name: Install required packages
   dnf:
-    name: python3-tripleoclient
-  become: true
+    name: "{{ item }}"
+  with_items:
+    - python3-tripleoclient
+    - rhosp-release
 
 - name: generate a container image prepare file
   shell: |
     openstack tripleo container image prepare default \
-  --local-push-destination \
-  --output-env-file containers-prepare-parameter.yaml
+    --local-push-destination \
+    --output-env-file containers-prepare-parameter.yaml
+  remote_user: stack
 
 - name: append the containerimage registry credentials
+  remote_user: stack
   blockinfile:
     dest: /home/stack/containers-prepare-parameter.yaml
     block: |
-      ContainerImageRegistryLogin: false
-      ContainerImageRegistryCredentials:
-        registry.redhat.io:
-          "{{ reg_user }}": "{{ reg_password }}"
+        ContainerImageRegistryLogin: false
+        ContainerImageRegistryCredentials:
+          registry.redhat.io:
+            "{{ reg_user }}": "{{ reg_password }}"
+
+- name: exclude ceph images
+  remote_user: stack
+  blockinfile:
+    dest: /home/stack/containers-prepare-parameter.yaml
+    insertafter: "- push_destination: true"
+    block: |
+          excludes:
+          - ceph
+          - prometheus
 
 - name: Setup undercloud.conf
+  remote_user: stack
   template:
     src: undercloud.conf.j2
     dest: "{{ undercloud_conf }}"

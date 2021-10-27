@@ -1,0 +1,14 @@
+---
+- name: install rhos-release
+  yum:
+    name: ~/rhos-release-latest.noarch.rpm
+    state: present
+  ignore_errors: yes
+
+- name: modify yum repos
+  shell: |
+    for i in $(ls /etc/yum.repos.d/);do sed -i "{{ item }}" /etc/yum.repos.d/$i; done
+  with_items:
+    - 's/download.devel.redhat.com/127.0.0.1:8998/g'
+    - 's/rhsm-pulp.corp.redhat.com/127.0.0.1:8999/g'
+
