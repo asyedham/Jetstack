@@ -7,7 +7,7 @@
 - name: Create a stack user
   user:
     name: "{{ user }}"
-    password: "{{ stack_ssh_pass }}"
+    password: "{{ stack_ssh_pass| password_hash('sha512') }}"
     create_home: yes
     home: "/home/{{ user }}"
 
@@ -16,31 +16,52 @@
     dest: "/etc/sudoers"
     line: "{{ user }} ALL=(root) NOPASSWD:ALL"
 
+- name: remove existing rhos-release files
+  shell: |
+    rm -rf /etc/yum.repos.d/rhos-*
+
+- name: remove existing rhos-release
+  yum:
+    name: rhos-release
+    state: absent
+  ignore_errors: yes
+
 - name: get rhos-release rpms
   shell: |
     wget http://127.0.0.1:8997/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
-  notify:
-    - install rhos-release
+  args:
+    chdir: /root/
 
-- name: add download.devel to /etc/hosts
+- name: install rhos-release
   shell: |
-    echo "127.0.0.1 download.devel.redhat.com" >> /etc/hosts
-  notify:
-    - install rhos-release
-    - modify yum repos
+    yum install /root/rhos-release-latest.noarch.rpm -y
+  ignore_errors: yes
+
+- name: modify yum repos
+  shell: |
+    for i in $(ls /etc/yum.repos.d/);do sed -i 's/download.devel.redhat.com/127.0.0.1:8998/g' /etc/yum.repos.d/$i; done
 
 - name: install rhos-release for specific osp version
   shell: |
     rhos-release "{{ osp_version }}" -p passed_phase2 -r "{{ rhel_version }}";
   ignore_errors: yes
-  notify:
-    - modify yum repos
+
+- name: modify yum repos
+  shell: |
+    for i in $(ls /etc/yum.repos.d/);do sed -i "{{ item }}" /etc/yum.repos.d/$i; done
+  with_items:
+    - 's/download.devel.redhat.com/127.0.0.1:8996/g'
+    - 's/rhsm-pulp.corp.redhat.com/127.0.0.1:8999/g'
+
+- name: DNF update the system
+  dnf:
+    name:  "*"
+    state: latest
 
 - name: enable the required virt and container-tools module
   shell: |
     dnf -y module disable virt:rhel container-tools:rhel8;
     dnf -y module enable virt:8.2 container-tools:2.0;
-    dnf update -y;
 
 - name: Install required packages
   dnf:
@@ -54,30 +75,26 @@
     openstack tripleo container image prepare default \
     --local-push-destination \
     --output-env-file containers-prepare-parameter.yaml
-  remote_user: stack
+  args:
+    chdir: /home/stack
 
 - name: append the containerimage registry credentials
-  remote_user: stack
   blockinfile:
-    dest: /home/stack/containers-prepare-parameter.yaml
+    path: /home/stack/containers-prepare-parameter.yaml
+    marker: "#<!-- {container_reg} ANSIBLE MANAGED BLOCK -->"
     block: |
+      #Adding registry.redhat,io cred
         ContainerImageRegistryLogin: false
         ContainerImageRegistryCredentials:
           registry.redhat.io:
             "{{ reg_user }}": "{{ reg_password }}"
 
 - name: exclude ceph images
-  remote_user: stack
   blockinfile:
-    dest: /home/stack/containers-prepare-parameter.yaml
+    path: /home/stack/containers-prepare-parameter.yaml
     insertafter: "- push_destination: true"
     block: |
+      #exclude
           excludes:
           - ceph
           - prometheus
-
-- name: Setup undercloud.conf
-  remote_user: stack
-  template:
-    src: undercloud.conf.j2
-    dest: "{{ undercloud_conf }}"
