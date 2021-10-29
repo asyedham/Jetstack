@@ -1,0 +1,58 @@
+---
+- name: unregister the default rhsm
+  redhat_subscription:
+    state: absent
+
+- name: remove existing rhos-release files
+  shell: |
+    rm -rf /etc/yum.repos.d/rhos-*
+
+- name: remove existing rhos-release
+  yum:
+    name: rhos-release
+    state: absent
+  ignore_errors: yes
+
+- name: get rhos-release rpms
+  shell: |
+    wget http://127.0.0.1:8997/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
+  args:
+    chdir: /root/
+
+- name: install rhos-release
+  shell: |
+    yum install /root/rhos-release-latest.noarch.rpm -y
+  ignore_errors: yes
+
+- name: modify yum repos
+  shell: |
+    for i in $(ls /etc/yum.repos.d/);do sed -i 's/download.devel.redhat.com/127.0.0.1:8998/g' /etc/yum.repos.d/$i; done
+
+- name: install rhos-release for specific osp version
+  shell: |
+    rhos-release "{{ osp_version }}" -p passed_phase2 -r "{{ rhel_version }}";
+  ignore_errors: yes
+
+- name: modify yum repos
+  shell: |
+    for i in $(ls /etc/yum.repos.d/);do sed -i "{{ item }}" /etc/yum.repos.d/$i; done
+  with_items:
+    - 's/download.devel.redhat.com/127.0.0.1:8996/g'
+    - 's/rhsm-pulp.corp.redhat.com/127.0.0.1:8999/g'
+
+- name: DNF update the system
+  dnf:
+    name:  "*"
+    state: latest
+
+- name: enable the required virt and container-tools module
+  shell: |
+    dnf -y module disable virt:rhel container-tools:rhel8;
+    dnf -y module enable virt:8.2 container-tools:2.0;
+
+- name: Install required packages
+  dnf:
+    name: "{{ item }}"
+  with_items:
+    - python3-tripleoclient
+    - rhosp-release
