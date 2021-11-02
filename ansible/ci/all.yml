@@ -11,7 +11,7 @@ undercloud_public_ip: "{{ lookup('env', 'UNDERCLOUD_PUBLIC_IP')|default('', true
 uc_ssh_pass: "{{ lookup('env', 'UNDERCLOUD_SSH_PASS')|default('', true) }}"
 reg_user:  "{{ lookup('env', 'REGISTRY_IO_USER')|default('', true) }}"
 reg_password: "{{ lookup('env', 'REGISTRY_IO_PASSWORD')|default('', true) }}"
-undercloud_local_interface: int2
+undercloud_local_interface: "{{ lookup('env', 'UNDERCLOUD_LOCAL_INTERFACE')|default('int2', true) }}"
 clean_nodes: false
 undercloud_conf: /home/stack/undercloud.conf
 instackenv_file: ~/instackenv.json
