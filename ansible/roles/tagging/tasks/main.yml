@@ -1,0 +1,25 @@
+---
+# tasks file for tagging
+- name: set resources properties for baremetal flavor
+  shell: |
+    source ~/stackrc
+    openstack flavor set baremetal \
+      --property resources:CUSTOM_BAREMETAL=1 \
+      --property resources:DISK_GB=0 \
+      --property resources:MEMORY_MB=0 \
+      --property resources:VCPU=0 \
+      --property capabilities:boot_option=local \
+      --property capabilities:profile=baremetal
+
+- name: get the node uuids
+  shell: |
+    source ~/stackrc
+    openstack baremetal node list -f value -c UUID
+  register: nodes_uuid
+  changed_when: false
+
+- name: tagging the nodes to baremetal profile
+  shell: |
+    source ~/stackrc
+    openstack baremetal node set "{{ item }}" --property capabilities=profile:baremetal,cpu_vt:true,cpu_hugepages:true,boot_option:local,cpu_txt:true,cpu_aes:true,cpu_hugepages_1g:true,boot_mode:bios
+  with_items: "{{ nodes_uuid.stdout_lines }}"
