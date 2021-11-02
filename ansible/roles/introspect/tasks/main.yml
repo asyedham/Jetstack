@@ -1,0 +1,18 @@
+---
+# tasks file for introspect
+#
+
+- name: register the overcloud nodes
+  shell: |
+    source ~/stackrc
+    openstack overcloud node import ~/instackenv.json
+
+- name: start node introspection
+  shell: |
+    source ~/stackrc
+    openstack overcloud node introspect --provide --all-manageable
+  register: bulk_intro_result
+  poll: 50
+  async: 1000
+  retries: 20
+  delay: 90
