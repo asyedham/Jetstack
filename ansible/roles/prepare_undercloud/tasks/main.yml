@@ -1,5 +1,6 @@
 ---
-#Prepares the undercloud
+#Prepares the prepare_undercloud
+
 - name: Install dependencies
   yum:
     name: "{{ item }}"

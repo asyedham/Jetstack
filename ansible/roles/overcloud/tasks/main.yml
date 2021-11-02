@@ -7,7 +7,7 @@
     dest: /home/stack/overcloud_deploy.sh
     mode: u+rwx,g-rx,o-rx
 
-- name: add ip on when external interface is real public interface
+- name: add ip on external interface
   shell: |
     ip a a {{ external_gateway }} dev {{ ext_iface }}
   become: true
