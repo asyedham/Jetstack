@@ -1,0 +1,23 @@
+---
+# vars file for prepare_undercloud
+osp_release: 16.1
+rhel_version: 8.2
+user: stack
+stack_ssh_pass: stack
+controller_count: 1
+compute_count: 1
+rhel_release: 8.2
+undercloud_public_ip: "{{ lookup('env', 'UNDERCLOUD_PUBLIC_IP')|default('', true) }}" 
+uc_ssh_pass: "{{ lookup('env', 'UNDERCLOUD_SSH_PASS')|default('', true) }}"
+reg_user:  "{{ lookup('env', 'REGISTRY_IO_USER')|default('', true) }}"
+reg_password: "{{ lookup('env', 'REGISTRY_IO_PASSWORD')|default('', true) }}"
+undercloud_local_interface: int2
+clean_nodes: false
+undercloud_conf: /home/stack/undercloud.conf
+instackenv_file: ~/instackenv.json
+external_net_cidr: 172.18.0.0/24
+external_allocation_pools_start: 172.18.0.50
+external_allocation_pools_end: 172.18.0.150
+external_interface_default_route: 172.18.0.1
+ext_iface: int3
+external_gateway: 172.18.0.1/24
