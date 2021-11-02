@@ -5,8 +5,11 @@ rhel_version: 8.2
 user: stack
 stack_ssh_pass: stack
 rhel_release: 8.2
-reg_user: user
-reg_password: passwd
+reg_user: <user>
+reg_password: <password>
 undercloud_local_interface: int2
 clean_nodes: false
 undercloud_conf: /home/stack/undercloud.conf
+undercloud_ip: <undercloud_ip>
+uc_ssh_pass: < root_pass_uc>
+instackenv_file: ~/instackenv.json

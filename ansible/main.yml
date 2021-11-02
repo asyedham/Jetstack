@@ -1,10 +1,11 @@
 ---
 - hosts: localhost
   roles:
-    - { role: enable_repos_undercloud }
-    - { role: prepare_undercloud }
+    - { role: add_host_undercloud }
 
 - hosts: undercloud
   gather_facts: false
   roles:
+    - { role: enable_repos_undercloud }
+    - { role: prepare_undercloud }
     - { role: undercloud }

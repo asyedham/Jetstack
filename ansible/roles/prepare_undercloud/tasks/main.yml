@@ -1,16 +1,15 @@
 ---
 #Prepares the undercloud
-- name: Create a stack user
-  user:
-    name: "{{ user }}"
-    password: "{{ stack_ssh_pass| password_hash('sha512') }}"
-    create_home: yes
-    home: "/home/{{ user }}"
-
-- name: Add to sudoers
-  lineinfile:
-    dest: "/etc/sudoers"
-    line: "{{ user }} ALL=(root) NOPASSWD:ALL"
+- name: Install dependencies
+  yum:
+    name: "{{ item }}"
+  loop:
+    - python3-tripleoclient
+    - rhosp-release
+    - libffi-devel
+    - openssl-devel
+    - python3-libselinux
+  become: true
 
 - name: generate a container image prepare file
   shell: |
@@ -31,7 +30,7 @@
         ContainerImageRegistryLogin: false
         ContainerImageRegistryCredentials:
           registry.redhat.io:
-            "{{ reg_user }}": "{{ reg_password }}"
+            {{ reg_user }}: {{ reg_password }}
 
 - name: exclude ceph images
   become: true
@@ -45,15 +44,7 @@
           - ceph
           - prometheus
 
-- name: get the public ip of the undercloud
-  shell: |
-    ip a | grep int1 | grep inet | awk '{print $2}' | cut -d '/' -f 1
-  register: undercloud_ip
-
-- name: add undercloud_host to inventory file
-  add_host:
-    name: "undercloud"
-    groups: "undercloud"
-    ansible_host: "{{ undercloud_ip.stdout }}"
-    ansible_user: "stack"
-    ansible_ssh_pass: "{{ stack_ssh_pass }}"
+- name: set max_concurrent_builds via hieradata
+  copy:
+    content: 'nova::compute::ironic::max_concurrent_builds: 5'
+    dest: /home/stack/hiera_override.yaml
