@@ -24,9 +24,9 @@
   become_user: stack
   blockinfile:
     path: /home/stack/containers-prepare-parameter.yaml
-    marker: "#<!-- {container_reg} ANSIBLE MANAGED BLOCK -->"
+    marker: "#<!-- ANSIBLE MANAGED BLOCK -->"
     block: |
-      #Adding registry.redhat,io cred
+      #Adding registry.redhat.io cred
         ContainerImageRegistryLogin: false
         ContainerImageRegistryCredentials:
           registry.redhat.io:
