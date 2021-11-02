@@ -20,6 +20,7 @@ Pre-requisites:
   The `username` should be the user that runs the playbook.
 
 * Make sure the Baremetal servers on IBM cloud have admin privilege for IPMI
+* Prepare the instackenv.json
 
 Tested Hardware:
 ================
