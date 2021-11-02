@@ -4,7 +4,7 @@
   add_host:
     name: "undercloud"
     groups: "undercloud"
-    ansible_host: "{{ undercloud_ip }}"
+    ansible_host: "{{ undercloud_public_ip }}"
     ansible_user: "root"
     ansible_ssh_pass: "{{ uc_ssh_pass }}"
 
@@ -13,6 +13,6 @@
   add_host:
     name: "undercloud"
     groups: "undercloud"
-    ansible_host: "{{ undercloud_ip }}"
+    ansible_host: "{{ undercloud_public_ip }}"
     ansible_user: "stack"
     ansible_ssh_pass: "{{ stack_ssh_pass }}"

@@ -7,7 +7,7 @@ stack_ssh_pass: stack
 controller_count: 1
 compute_count: 1
 rhel_release: 8.2
-undercloud_ip: <undercloud_ip>
+undercloud_public_ip: <undercloud_public_ip>
 uc_ssh_pass: <undercloud_password>
 reg_user:  <registry_redhat_io_user>
 reg_password: <registry_redhat_io_password>
