@@ -44,7 +44,7 @@
 
 - name: install rhos-release for specific osp version
   shell: |
-    rhos-release "{{ osp_version }}" -p passed_phase2 -r "{{ rhel_version }}";
+    rhos-release "{{ osp_release }}" -p passed_phase2 -r "{{ rhel_version }}";
   ignore_errors: yes
 
 - name: modify yum repos
@@ -68,16 +68,3 @@
   yum:
     name:  "*"
     state: latest
-
-#- name: get the public ip of the undercloud
-#  shell: |
-#    ip a | grep int1 | grep inet | awk '{print $2}' | cut -d '/' -f 1
-#  register: undercloud_ip
-
-#- name: add undercloud_host to inventory file
-#  add_host:
-#    name: "undercloud"
-#    groups: "undercloud"
-#    ansible_host: "{{ undercloud_ip.stdout }}"
-#    ansible_user: "stack"
-#    ansible_ssh_pass: "{{ stack_ssh_pass }}"

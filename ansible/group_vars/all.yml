@@ -1,15 +1,23 @@
 ---
 # vars file for prepare_undercloud
-osp_version: 16.1
+osp_release: 16.1
 rhel_version: 8.2
 user: stack
 stack_ssh_pass: stack
+controller_count: 1
+compute_count: 1
 rhel_release: 8.2
-reg_user: <user>
-reg_password: <password>
+undercloud_ip: <undercloud_ip>
+uc_ssh_pass: <undercloud_password>
+reg_user:  <registry_redhat_io_user>
+reg_password: <registry_redhat_io_password>
 undercloud_local_interface: int2
 clean_nodes: false
 undercloud_conf: /home/stack/undercloud.conf
-undercloud_ip: <undercloud_ip>
-uc_ssh_pass: < root_pass_uc>
 instackenv_file: ~/instackenv.json
+external_net_cidr: 172.18.0.0/24
+external_allocation_pools_start: 172.18.0.50
+external_allocation_pools_end: 172.18.0.150
+external_interface_default_route: 172.18.0.1
+ext_iface: int3
+external_gateway: 172.18.0.1/24

@@ -1,5 +1,11 @@
 ---
 # tasks file for prepare_overcloud
+- name: copy the instackenv.json
+  become: true
+  copy:
+    src: "{{ instackenv_file }}"
+    dest: /home/stack/instackenv.json
+
 - name: check if the the instackenv.json exists
   stat:
     path: "{{ instackenv_file }}"
@@ -11,48 +17,28 @@
   when: instack.stat.exists == False
 
 - name: Obtaining images for overcloud nodes
-  dnf:
-    name: "{{ item }}"
-  with_item:
-    - rhosp-director-images
-    - rhosp-director-images-ipa
+  become: true
+  package:
+    name: rhosp-director-images
+    state: latest
 
-- name: Extract the image archives to images
-  shell: |
-    for i in /usr/share/rhosp-director-images/overcloud-full-latest-16.1.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-16.1.tar; do tar -xvf $i; done
+- name: untar the images
+  become: yes
+  unarchive:
+      src: "/usr/share/rhosp-director-images/{{ item }}"
+      dest: "~stack/"
+      copy: no
+      owner: "stack"
+      group: "stack"
+      list_files: yes
+  register: image_files
+  with_items: "{{ tar_files }}"
+  vars:
+    tar_files:
+      - "overcloud-full-latest-{{ osp_release }}.tar"
+      - "ironic-python-agent-latest-{{ osp_release }}.tar"
 
 - name: import images into director
   shell: |
-    source stackrc
+    source ~/stackrc
     openstack overcloud image upload --image-path /home/stack/
-
-- name: validate the instackenv.json
-  shell: |
-    source ~/stackrc
-    openstack overcloud node import --validate-only ~/instackenv.json
-
-- name: import the overcloud nodes
-  shell: |
-    source ~/stackrc
-    openstack overcloud node import ~/instackenv.json
-
-- name: introspect the overcloud nodes
-  shell: |
-    source ~/stackrc
-    openstack overcloud node introspect --all-manageable --provide
-
-- name : set properties for baremetal flavor
-  shell: |
-    source ~/stackrc
-    openstack flavor set --property "capabilities:boot_option"="local" --property "capabilities:profile"="baremetal" baremetal
-
-- name: get the oc node ids
-  shell: |
-    openstack baremetal node list --format value -c UUID
-  register: node_ids
-
-- name: tag the overcloud nodes
-  shell: |
-    source ~/stackrc
-    openstack baremetal node set "{{ item }}" --property capabilities=profile:baremetal,cpu_vt:true,cpu_hugepages:true,boot_option:local,cpu_txt:true,cpu_aes:true,cpu_hugepages_1g:true,boot_mode:bios
-  with_items: "{{ node_ids.results }}"
