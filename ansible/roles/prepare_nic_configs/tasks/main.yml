@@ -1,0 +1,35 @@
+---
+# tasks file for prepare_nic_configs
+- name: set nic configs
+  set_fact:
+    nic_configs: "/home/stack/virt"
+
+- name: create nic-configs directory
+  file:
+    path: "{{ nic_configs }}/network/"
+    state: directory
+
+- name: prepare network-environment.yaml
+  template:
+    src: network-environment.yaml.j2
+    dest: "{{ nic_configs }}/network/network-environment.yaml"
+
+- name: prepare controller.yaml
+  copy:
+    src: "{{ role_path }}/files/controller.yaml"
+    dest: "{{ nic_configs }}/network/"
+
+- name: prepare compute.yaml
+  copy:
+    src: "{{ role_path }}/files/compute.yaml"
+    dest: "{{ nic_configs }}/network/"
+
+- name: prepare nodes_data.yaml
+  template:
+    src: nodes_data.yaml.j2
+    dest: "{{ nic_configs }}/nodes_data.yaml"
+
+- name: prepare hostnames.yaml
+  copy:
+    src: "{{ role_path }}/files/hostnames.yaml"
+    dest: "{{ nic_configs }}"

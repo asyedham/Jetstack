@@ -1,0 +1,7 @@
+{% if controller_count >= 1 and compute_count >= 1 %}
+parameter_defaults:
+    ControllerCount: {{ controller_count }}
+    OvercloudControllerFlavor: baremetal
+    ComputeCount: {{ compute_count }}
+    OvercloudComputeFlavor: baremetal
+{% endif %}
