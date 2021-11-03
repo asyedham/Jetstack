@@ -14,7 +14,7 @@ reg_password: <registry_redhat_io_password>
 undercloud_local_interface: int2
 clean_nodes: false
 undercloud_conf: /home/stack/undercloud.conf
-instackenv_file: "{{ ansible_user_dir }}/instackenv.json"
+instackenv_file: /root/instackenv.json
 external_net_cidr: 172.18.0.0/24
 external_allocation_pools_start: 172.18.0.50
 external_allocation_pools_end: 172.18.0.150
