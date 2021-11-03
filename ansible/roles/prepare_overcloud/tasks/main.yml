@@ -5,11 +5,10 @@
   copy:
     src: "{{ instackenv_file }}"
     dest: /home/stack/instackenv.json
-  delegate_to: localhost
 
 - name: check if the the instackenv.json exists
   stat:
-    path: "{{ instackenv_file }}"
+    path: ~/instackenv.json
   register: instack
 
 - name: Missing instackenv.json
