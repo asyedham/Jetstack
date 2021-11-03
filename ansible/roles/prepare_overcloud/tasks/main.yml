@@ -1,7 +1,6 @@
 ---
 # tasks file for prepare_overcloud
 - name: copy the instackenv.json
-  become: true
   copy:
     src: "{{ instackenv_file }}"
     dest: /home/stack/instackenv.json
