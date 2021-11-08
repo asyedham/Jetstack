@@ -12,13 +12,20 @@
     - python3-libselinux
   become: true
 
-- name: generate a container image prepare file
+  #- name: generate a container image prepare file
+  #  shell: |
+  #    openstack tripleo container image prepare default \
+  #    --local-push-destination \
+  #    --output-env-file containers-prepare-parameter.yaml
+  #  args:
+  #    chdir: /home/stack
+
+- name: get container image prepare file
   shell: |
-    openstack tripleo container image prepare default \
-    --local-push-destination \
-    --output-env-file containers-prepare-parameter.yaml
+    wget 'http://127.0.0.1:8997/rcm-guest/puddles/OpenStack/{{ osp_release }}-RHEL-8/{{ osp_puddle }}/container_image_prepare.yaml'
   args:
     chdir: /home/stack
+
 
 - name: exclude ceph images
   blockinfile:
@@ -29,6 +36,15 @@
           excludes:
           - ceph
           - prometheus
+
+# The ceph keys that start with 'ceph-' need to be passed into
+# 'openstack container image prepare' as 'ceph_'
+
+- name: replace the ceph- with ceph_
+  replace:
+    path: /home/stack/containers-prepare-parameter.yaml
+    regexp: '^(\s*ceph-).*'
+    replace: "ceph_"
 
 - name: set namespace in containers-prepare-parameter.yaml
   replace:
@@ -44,7 +60,7 @@
 
 - name: get tag info
   shell: |
-    wget http://127.0.0.1:8997/rcm-guest/puddles/OpenStack/{{ osp_release }}-RHEL-8/'{{ osp_puddle }}'/overcloud_container_image_prepare.yaml;
+    wget 'http://127.0.0.1:8997/rcm-guest/puddles/OpenStack/{{ osp_release }}-RHEL-8/{{ osp_puddle }}/overcloud_container_image_prepare.yaml'
     cat overcloud_container_image_prepare.yaml | grep tag | cut -d ":" -f 2 | awk '{$1=$1};1'
   register: tag_info
   args:
