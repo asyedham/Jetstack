@@ -1,4 +1,11 @@
 ---
+- name: clearing the known_hosts
+  known_hosts:
+    name: "{{ undercloud_public_ip }}"
+    path: ~/.ssh/known_hosts
+    state: absent
+  delegate_to: localhost
+
 - name: unregister the default rhsm
   redhat_subscription:
     state: absent
@@ -44,7 +51,7 @@
 
 - name: install rhos-release for specific osp version
   shell: |
-    rhos-release "{{ osp_release }}" -p passed_phase2 -r "{{ rhel_version }}";
+    rhos-release "{{ osp_release }}" -p "{{ osp_puddle }}" -r "{{ rhel_version }}";
   ignore_errors: yes
 
 - name: modify yum repos
@@ -56,13 +63,13 @@
 
 - name: container module
   shell: |
-    sudo dnf module disable -y container-tools:rhel8
-    sudo dnf module enable -y container-tools:2.0
+    dnf module disable -y "{{ dnf_modules[(osp_release|float)].disabled[0] }}"
+    dnf module enable -y "{{ dnf_modules[(osp_release|float)].enabled[0] }}"
 
 - name: virt module
   shell: |
-     sudo dnf module disable -y virt:rhel
-     sudo dnf module enable -y virt:8.2
+    dnf module disable -y "{{ dnf_modules[(osp_release|float)].disabled[1] }}"
+    dnf module enable -y "{{ dnf_modules[(osp_release|float)].enabled[1] }}"
 
 - name: yum update the system
   yum:

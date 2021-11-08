@@ -1,6 +1,7 @@
 ---
 # vars file for prepare_undercloud
 osp_release: 16.1
+osp_puddle: passed_phase2
 rhel_version: 8.2
 user: stack
 stack_ssh_pass: stack
@@ -9,8 +10,6 @@ compute_count: 1
 rhel_release: 8.2
 undercloud_public_ip: "{{ lookup('env', 'UNDERCLOUD_PUBLIC_IP')|default('', true) }}" 
 uc_ssh_pass: "{{ lookup('env', 'UNDERCLOUD_SSH_PASS')|default('', true) }}"
-reg_user:  "{{ lookup('env', 'REGISTRY_IO_USER')|default('', true) }}"
-reg_password: "{{ lookup('env', 'REGISTRY_IO_PASSWORD')|default('', true) }}"
 undercloud_local_interface: "{{ lookup('env', 'UNDERCLOUD_LOCAL_INTERFACE')|default('int2', true) }}"
 clean_nodes: false
 undercloud_conf: /home/stack/undercloud.conf
@@ -21,3 +20,14 @@ external_allocation_pools_end: 172.18.0.150
 external_interface_default_route: 172.18.0.1
 ext_iface: int3
 external_gateway: 172.18.0.1/24
+dnf_modules:
+  16.1:
+    disabled:
+      - container-tools:rhel8
+      - virt:rhel
+    enabled:
+      - container-tools:2.0
+      - virt:8.2
+registry_mirror: "{{ lookup('env', 'REGISTRY_MIRROR')|default('', true) }}"
+registry_namespace: "{{ lookup('env', 'REGISTRY_NAMESPACE')|default('', true) }}"
+registry_prefix: rhosp16-openstack-

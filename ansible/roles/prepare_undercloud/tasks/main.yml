@@ -20,22 +20,7 @@
   args:
     chdir: /home/stack
 
-- name: append the containerimage registry credentials
-  become: true
-  become_user: stack
-  blockinfile:
-    path: /home/stack/containers-prepare-parameter.yaml
-    marker: "#<!-- ANSIBLE MANAGED BLOCK -->"
-    block: |
-      #Adding registry.redhat.io cred
-        ContainerImageRegistryLogin: false
-        ContainerImageRegistryCredentials:
-          registry.redhat.io:
-            {{ reg_user }}: {{ reg_password }}
-
 - name: exclude ceph images
-  become: true
-  become_user: stack
   blockinfile:
     path: /home/stack/containers-prepare-parameter.yaml
     insertafter: "- push_destination: true"
@@ -44,6 +29,43 @@
           excludes:
           - ceph
           - prometheus
+
+- name: set namespace in containers-prepare-parameter.yaml
+  replace:
+    path: /home/stack/containers-prepare-parameter.yaml
+    regexp: '^(\s*namespace:).*'
+    replace: "\\1 {{ registry_mirror }}/{{ registry_namespace }}"
+
+- name: set name_prefix in containers-prepare-parameter.yaml
+  replace:
+    path: /home/stack/containers-prepare-parameter.yaml
+    regexp: '(^\ +)name_prefix.*'
+    replace: "\\1name_prefix: {{ registry_prefix }}"
+
+- name: get tag info
+  shell: |
+    wget http://127.0.0.1:8997/rcm-guest/puddles/OpenStack/{{ osp_release }}-RHEL-8/'{{ osp_puddle }}'/overcloud_container_image_prepare.yaml;
+    cat overcloud_container_image_prepare.yaml | grep tag | cut -d ":" -f 2 | awk '{$1=$1};1'
+  register: tag_info
+  args:
+    chdir: /home/stack
+
+- name: set tag according to puddle number
+  replace:
+    path: /home/stack/containers-prepare-parameter.yaml
+    regexp: '(^\ +)tag: .*'
+    replace: "\\1tag: {{ tag_info.stdout }}"
+
+- name: remove tag_from_label in containers-prepare-parameter.yaml
+  lineinfile:
+    path: /home/stack/containers-prepare-parameter.yaml
+    regexp: '.*tag_from_label.*'
+    state: absent
+
+- name: add registry_mirror in /etc/hosts
+  become: true
+  shell: |
+    echo "127.0.0.1 {{ registry_mirror }}" >> /etc/hosts
 
 - name: set max_concurrent_builds via hieradata
   copy:
