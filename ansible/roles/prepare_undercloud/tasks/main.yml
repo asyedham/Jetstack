@@ -22,7 +22,7 @@
 
 - name: get container image prepare file
   shell: |
-    wget 'http://127.0.0.1:8997/rcm-guest/puddles/OpenStack/{{ osp_release }}-RHEL-8/{{ osp_puddle }}/container_image_prepare.yaml'
+    wget 'http://127.0.0.1:8997/rcm-guest/puddles/OpenStack/{{ osp_release }}-RHEL-8/{{ osp_puddle }}/container_image_prepare.yaml' -O containers-prepare-parameter.yaml
   args:
     chdir: /home/stack
 
@@ -39,12 +39,11 @@
 
 # The ceph keys that start with 'ceph-' need to be passed into
 # 'openstack container image prepare' as 'ceph_'
-
 - name: replace the ceph- with ceph_
   replace:
     path: /home/stack/containers-prepare-parameter.yaml
-    regexp: '^(\s*ceph-).*'
-    replace: "ceph_"
+    regexp: 'ceph-'
+    replace: 'ceph_'
 
 - name: set namespace in containers-prepare-parameter.yaml
   replace:

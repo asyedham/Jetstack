@@ -10,7 +10,7 @@
   become: true
   become_user: stack
   shell: |
-    openstack undercloud install &> jetstack_undercloud_install.log
+    openstack undercloud install
 
 - name: Enable Root Login
   lineinfile:
