@@ -1,6 +1,8 @@
 ---
 # tasks file for prepare_overcloud
 - name: delete existing overcloud
+  become: true
+  become_user: stack
   shell: |
     source ~/stackrc
     openstack overcloud delete overcloud -y
@@ -14,7 +16,7 @@
 
 - name: check if the the instackenv.json exists
   stat:
-    path: ~/instackenv.json
+    path: /home/stack/instackenv.json
   register: instack
 
 - name: Missing instackenv.json
@@ -45,6 +47,8 @@
       - "ironic-python-agent-latest-{{ osp_release }}.tar"
 
 - name: import images into director
+  become: true
+  become_user: stack
   shell: |
     source ~/stackrc
     openstack overcloud image upload --image-path /home/stack/
