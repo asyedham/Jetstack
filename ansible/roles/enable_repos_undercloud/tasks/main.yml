@@ -22,7 +22,6 @@
     dest: "/etc/sudoers"
     line: "{{ user }} ALL=(root) NOPASSWD:ALL"
 
-
 - name: remove existing rhos-release files
   shell: |
     rm -rf /etc/yum.repos.d/rhos-*

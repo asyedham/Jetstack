@@ -12,36 +12,25 @@
     - python3-libselinux
   become: true
 
-  #- name: generate a container image prepare file
-  #  shell: |
-  #    openstack tripleo container image prepare default \
-  #    --local-push-destination \
-  #    --output-env-file containers-prepare-parameter.yaml
-  #  args:
-  #    chdir: /home/stack
-
-- name: get container image prepare file
+- name: generate a container image prepare file
   shell: |
-    wget 'http://127.0.0.1:8997/rcm-guest/puddles/OpenStack/{{ osp_release }}-RHEL-8/{{ osp_puddle }}/container_image_prepare.yaml' -O containers-prepare-parameter.yaml
+    openstack tripleo container image prepare default \
+    --local-push-destination \
+    --output-env-file containers-prepare-parameter.yaml
   args:
     chdir: /home/stack
 
-
-- name: exclude ceph images
-  blockinfile:
-    path: /home/stack/containers-prepare-parameter.yaml
-    insertafter: "- push_destination: true"
-    block: |
-      #exclude
-          excludes:
-          - ceph
-          - prometheus
+- name: get container image prepare file
+  shell: |
+    wget 'http://127.0.0.1:8997/rcm-guest/puddles/OpenStack/{{ osp_release }}-RHEL-8/{{ osp_puddle }}/container_image_prepare.yaml'
+  args:
+    chdir: /home/stack
 
 # The ceph keys that start with 'ceph-' need to be passed into
 # 'openstack container image prepare' as 'ceph_'
 - name: replace the ceph- with ceph_
   replace:
-    path: /home/stack/containers-prepare-parameter.yaml
+    path: /home/stack/container_image_prepare.yaml
     regexp: 'ceph-'
     replace: 'ceph_'
 
@@ -59,9 +48,15 @@
 
 - name: get tag info
   shell: |
-    wget 'http://127.0.0.1:8997/rcm-guest/puddles/OpenStack/{{ osp_release }}-RHEL-8/{{ osp_puddle }}/overcloud_container_image_prepare.yaml'
-    cat overcloud_container_image_prepare.yaml | grep tag | cut -d ":" -f 2 | awk '{$1=$1};1'
+     cat container_image_prepare.yaml | grep ceph_[A-Za-z] | awk '{$1=$1};1'
   register: tag_info
+  args:
+    chdir: /home/stack
+
+- name: get ceph info
+  shell: |
+    cat container_image_prepare.yaml | grep ceph_[A-Za-z]
+  register: ceph_info
   args:
     chdir: /home/stack
 
@@ -76,6 +71,32 @@
     path: /home/stack/containers-prepare-parameter.yaml
     regexp: '.*tag_from_label.*'
     state: absent
+
+- name: remove ceph containers-prepare-parameter.yaml
+  lineinfile:
+    path: /home/stack/containers-prepare-parameter.yaml
+    regexp: 'ceph_*'
+    state: absent
+
+- name: exclude ceph images
+  blockinfile:
+    path: /home/stack/containers-prepare-parameter.yaml
+    insertafter: "- push_destination: true"
+    block: |
+      #exclude
+          excludes:
+          - ceph
+          - prometheus
+
+- name: append ceph info containers-prepare-parameter.yaml
+  lineinfile:
+    path: /home/stack/containers-prepare-parameter.yaml
+    insertafter: 'set:'
+    line: |
+      #{{item }}
+          {{ item }}
+  with_items:
+    -  "{{ ceph_info.stdout_lines }}"
 
 - name: add registry_mirror in /etc/hosts
   become: true
