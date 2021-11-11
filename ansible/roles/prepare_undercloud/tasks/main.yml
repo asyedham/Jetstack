@@ -48,7 +48,7 @@
 
 - name: get tag info
   shell: |
-     cat container_image_prepare.yaml | grep ceph_[A-Za-z] | awk '{$1=$1};1'
+    cat container_image_prepare.yaml | grep ' tag:'| cut -d ':' -f 2 | awk '{$1=$1};1'
   register: tag_info
   args:
     chdir: /home/stack
