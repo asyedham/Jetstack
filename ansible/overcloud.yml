@@ -7,7 +7,7 @@
   gather_facts: false
   roles:
     - { role: prepare_overcloud, tags: overcloud }
-    - { role: introspect, tags: overcloud }
-    - { role: tagging, tags: overcloud }
-    - { role: prepare_nic_configs, tags: overcloud }
-    - { role: overcloud, tags: overcloud }
+    - { role: introspect, tags: overcloud, become: true, become_user: stack }
+    - { role: tagging, tags: overcloud, become: true, become_user: stack }
+    - { role: prepare_nic_configs, tags: overcloud, become: true, become_user: stack }
+    - { role: overcloud, tags: overcloud, become: true, become_user: stack }
