@@ -40,8 +40,8 @@ User needs to update the below vars in group_vars/all.yml
 ```
 undercloud_ip: public ip of the undercloud
 uc_ssh_pass: root password of the undercloud
-reg_user: user for registry.redhat.io
-reg_password: token for registry.redhat.io
+registry_mirror: registry mirror
+registry_namespace: registry namespace
 ```
 
 To install undercloud
